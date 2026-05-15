@@ -26,11 +26,27 @@ out;
       "https://overpass-api.de/api/interpreter",
       {
         method: "POST",
-        body: query
+        body: query,
+        headers: {
+          "Content-Type": "text/plain"
+        }
       }
     );
 
-    const osmData = await osmRes.json();
+    const rawText = await osmRes.text();
+
+    // 🔥 пытаемся распарсить JSON
+    let osmData;
+
+    try {
+      osmData = JSON.parse(rawText);
+    } catch (e) {
+      return res.status(500).json({
+        ok: false,
+        error: "Overpass вернул не JSON",
+        raw: rawText
+      });
+    }
 
     const places = osmData.elements
       .map(el => ({
