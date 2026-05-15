@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>AI GPS Free</title>
+  <title>AI GPS Guide</title>
   <style>
     body { font-family: Arial; padding: 20px; }
     button { padding: 10px 20px; cursor: pointer; }
@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<h2>AI GPS (OpenRouter FREE)</h2>
+<h2>AI GPS (Free OpenRouter)</h2>
 
 <button onclick="ask()">Что рядом?</button>
 
@@ -30,40 +30,20 @@ async function ask() {
     out.innerText = "Спрашиваю AI...";
 
     try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const res = await fetch("/api/ask", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer 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",
-          "HTTP-Referer": window.location.href,
-          "X-Title": "AI GPS Guide"
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          model: "meta-llama/llama-3.1-8b-instruct:free",
-          messages: [
-            {
-              role: "system",
-              content: "Ты туристический гид. Отвечай кратко и по делу."
-            },
-            {
-              role: "user",
-              content: `Я нахожусь здесь: ${lat}, ${lng}. Что интересного рядом?`
-            }
-          ]
-        })
+        body: JSON.stringify({ lat, lng })
       });
 
       const data = await res.json();
 
-      if (data.error) {
-        out.innerText = "Ошибка: " + data.error.message;
-        return;
-      }
-
-      out.innerText = data.choices[0].message.content;
+      out.innerText = data.text || "Нет ответа";
 
     } catch (e) {
-      out.innerText = "Ошибка запроса: " + e.message;
+      out.innerText = "Ошибка: " + e.message;
     }
 
   }, (err) => {
