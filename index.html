@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Гид MVP</title>
+</head>
+<body>
+
+<h2>AI Гид</h2>
+
+<button onclick="ask()">Что вокруг меня?</button>
+
+<pre id="out"></pre>
+
+<script>
+async function ask() {
+  const out = document.getElementById("out");
+  out.innerText = "Берём GPS...";
+
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+
+    out.innerText = "Спрашиваю AI...";
+
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer YOUR_OPENAI_API_KEY"
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Ты туристический гид. Объясняй просто и интересно."
+          },
+          {
+            role: "user",
+            content: `Я здесь: ${lat}, ${lng}. Расскажи что вокруг может быть интересного.`
+          }
+        ]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.choices[0].message.content;
+
+    out.innerText = text;
+  });
+}
+</script>
+
+</body>
+</html>
