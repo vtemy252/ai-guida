@@ -6,7 +6,7 @@
   <style>
     body { font-family: Arial; padding: 20px; }
     button { padding: 10px 20px; cursor: pointer; }
-    #out { margin-top: 20px; white-space: pre-wrap; }
+    #out { margin-top: 20px; white-space: pre-wrap; background: #f4f4f4; padding: 10px; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -40,10 +40,11 @@ async function ask() {
 
       const data = await res.json();
 
-      out.innerText = data.text || "Нет ответа";
+      // 🔥 ВАЖНО: показываем ВСЁ, чтобы увидеть проблему
+      out.innerText = JSON.stringify(data, null, 2);
 
     } catch (e) {
-      out.innerText = "Ошибка: " + e.message;
+      out.innerText = "Ошибка запроса: " + e.message;
     }
 
   }, (err) => {
