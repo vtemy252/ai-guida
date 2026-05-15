@@ -9,40 +9,22 @@ export default async function handler(req, res) {
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`
       },
       body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct:free",
+        model: "openai/gpt-3.5-turbo", 
         messages: [
           {
             role: "user",
-            content: `Я здесь: ${lat}, ${lng}. Что интересного рядом?`
+            content: "Say ONLY: OK"
           }
         ]
       })
     });
 
-    const data = await response.json();
-
-    // 🔥 ВАЖНО — сразу показываем ошибку если есть
-    if (data.error) {
-      return res.status(500).json({
-        ok: false,
-        error: data.error.message || "OpenRouter error",
-        raw: data
-      });
-    }
-
-    const text = data?.choices?.[0]?.message?.content;
-
-    if (!text) {
-      return res.status(500).json({
-        ok: false,
-        error: "EMPTY_RESPONSE",
-        raw: data
-      });
-    }
+    const rawText = await response.text();
 
     return res.status(200).json({
       ok: true,
-      text
+      status: response.status,
+      raw: rawText
     });
 
   } catch (e) {
