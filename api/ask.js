@@ -9,7 +9,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const radius = 1200;
+    const radius = 1000;
 
     const query = `
 [out:json];
@@ -23,19 +23,18 @@ out;
 `;
 
     const osmRes = await fetch(
-      "https://overpass-api.de/api/interpreter",
+      "https://overpass.kumi.systems/api/interpreter",
       {
         method: "POST",
-        body: query,
         headers: {
           "Content-Type": "text/plain"
-        }
+        },
+        body: query
       }
     );
 
     const rawText = await osmRes.text();
 
-    // 🔥 пытаемся распарсить JSON
     let osmData;
 
     try {
@@ -43,8 +42,8 @@ out;
     } catch (e) {
       return res.status(500).json({
         ok: false,
-        error: "Overpass вернул не JSON",
-        raw: rawText
+        error: "Overpass не вернул JSON",
+        raw: rawText.slice(0, 500)
       });
     }
 
