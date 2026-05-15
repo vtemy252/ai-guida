@@ -1,7 +1,5 @@
 export default async function handler(req, res) {
   try {
-    const { lat, lng } = req.body || {};
-
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -9,22 +7,22 @@ export default async function handler(req, res) {
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo", 
+        model: "openai/gpt-3.5-turbo",
         messages: [
           {
             role: "user",
-            content: "Say ONLY: OK"
+            content: "Say exactly: HELLO_TEST"
           }
         ]
       })
     });
 
-    const rawText = await response.text();
+    const data = await response.json();
 
+    // 🔥 ВАЖНО: вернём ВСЁ как есть
     return res.status(200).json({
       ok: true,
-      status: response.status,
-      raw: rawText
+      full: data
     });
 
   } catch (e) {
