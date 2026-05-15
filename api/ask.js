@@ -3,40 +3,41 @@ export default async function handler(req, res) {
     const { lat, lng } = req.body || {};
 
     if (!lat || !lng) {
-      return res.status(400).json({
-        error: "No GPS data received"
-      });
+      return res.status(400).json({ error: "No GPS data" });
     }
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "HTTP-Referer": "https://your-site.vercel.app",
-        "X-Title": "AI GPS Guide"
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`
       },
       body: JSON.stringify({
         model: "openchat/openchat-7b:free",
         messages: [
           {
-            role: "system",
-            content: "Ты туристический гид. Отвечай кратко и понятно."
-          },
-          {
             role: "user",
-            content: `Я нахожусь здесь: ${lat}, ${lng}. Что интересного рядом?`
+            content: `Я здесь: ${lat}, ${lng}. Что интересного рядом?`
           }
         ]
       })
     });
 
-    const data = await response.json();
+    const text = await response.text();
 
-    // 🔥 ВАЖНО: логируем чтобы видеть реальный ответ
-    console.log("OPENROUTER RESPONSE:", JSON.stringify(data, null, 2));
+    // 🔥 ВАЖНО: сначала выводим RAW ответ (это диагностика)
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      return res.status(500).json({
+        error: "Invalid JSON from OpenRouter",
+        raw: text
+      });
+    }
 
-    // ❗ если API вернул ошибку
+    console.log("OPENROUTER:", data);
+
     if (data.error) {
       return res.status(500).json({
         error: data.error.message || "OpenRouter error",
@@ -44,13 +45,11 @@ export default async function handler(req, res) {
       });
     }
 
-    // ✔ правильное извлечение ответа
-    const text =
+    const answer =
       data?.choices?.[0]?.message?.content ||
-      data?.choices?.[0]?.text ||
       "Нет ответа от модели";
 
-    return res.status(200).json({ text });
+    return res.status(200).json({ text: answer });
 
   } catch (err) {
     return res.status(500).json({
