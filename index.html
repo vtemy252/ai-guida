@@ -32,16 +32,19 @@
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       white-space: pre-wrap;
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
-    .place {
-      margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #eee;
+    .block {
+      margin-bottom: 15px;
     }
 
-    .type {
+    .title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .small {
       color: gray;
       font-size: 14px;
     }
@@ -54,11 +57,12 @@
 <button onclick="ask()">Что рядом?</button>
 
 <div id="out">
-Нажми кнопку, чтобы найти реальные места рядом
+Нажми кнопку, чтобы определить местоположение
 </div>
 
 <script>
 async function ask() {
+
   const out = document.getElementById("out");
 
   out.innerText = "📡 Получаем GPS...";
@@ -68,7 +72,7 @@ async function ask() {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
 
-    out.innerText = "🗺 Ищем реальные места рядом...";
+    out.innerText = "🗺 Определяем место...";
 
     try {
 
@@ -83,33 +87,46 @@ async function ask() {
       const data = await res.json();
 
       if (!data.ok) {
-        out.innerText = "❌ Ошибка:\n" + data.error;
+        out.innerText =
+          "❌ Ошибка:\n\n" +
+          data.error;
         return;
       }
 
-      if (!data.places.length) {
-        out.innerText = "😕 Ничего интересного рядом не найдено";
-        return;
-      }
+      out.innerHTML = `
+        <div class="block">
+          <div class="title">📍 Вы находитесь:</div>
+          <div>${data.place || "Неизвестное место"}</div>
+        </div>
 
-      out.innerHTML =
-        "<h3>📍 Реальные места рядом:</h3>" +
-        data.places.map(place => `
-          <div class="place">
-            <b>${place.name}</b><br>
-            <span class="type">${place.type || "место"}</span>
+        <div class="block">
+          <div class="title">🏙 Район / адрес:</div>
+          <div class="small">
+            ${JSON.stringify(data.address, null, 2)}
           </div>
-        `).join("");
+        </div>
+
+        <div class="block">
+          <div class="title">🌍 Координаты:</div>
+          <div class="small">
+            ${lat}, ${lng}
+          </div>
+        </div>
+      `;
 
     } catch (e) {
 
-      out.innerText = "❌ Ошибка запроса:\n" + e.message;
+      out.innerText =
+        "❌ Ошибка запроса:\n\n" +
+        e.message;
 
     }
 
   }, (err) => {
 
-    out.innerText = "❌ GPS ошибка:\n" + err.message;
+    out.innerText =
+      "❌ GPS ошибка:\n\n" +
+      err.message;
 
   });
 }
