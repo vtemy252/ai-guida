@@ -1,20 +1,26 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>AI Гид MVP</title>
+  <meta charset="UTF-8">
+  <title>AI GPS Free</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    button { padding: 10px 20px; cursor: pointer; }
+    #out { margin-top: 20px; white-space: pre-wrap; }
+  </style>
 </head>
 <body>
 
-<h2>AI Гид</h2>
+<h2>AI GPS (OpenRouter FREE)</h2>
 
-<button onclick="ask()">Что вокруг меня?</button>
+<button onclick="ask()">Что рядом?</button>
 
-<pre id="out"></pre>
+<div id="out"></div>
 
 <script>
 async function ask() {
   const out = document.getElementById("out");
+
   out.innerText = "Берём GPS...";
 
   navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -23,31 +29,45 @@ async function ask() {
 
     out.innerText = "Спрашиваю AI...";
 
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer YOUR_OPENAI_API_KEY"
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        messages: [
-          {
-            role: "system",
-            content: "Ты туристический гид. Объясняй просто и интересно."
-          },
-          {
-            role: "user",
-            content: `Я здесь: ${lat}, ${lng}. Расскажи что вокруг может быть интересного.`
-          }
-        ]
-      })
-    });
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer YOUR_OPENROUTER_API_KEY",
+          "HTTP-Referer": window.location.href,
+          "X-Title": "AI GPS Guide"
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.1-8b-instruct:free",
+          messages: [
+            {
+              role: "system",
+              content: "Ты туристический гид. Отвечай кратко и по делу."
+            },
+            {
+              role: "user",
+              content: `Я нахожусь здесь: ${lat}, ${lng}. Что интересного рядом?`
+            }
+          ]
+        })
+      });
 
-    const data = await res.json();
-    const text = data.choices[0].message.content;
+      const data = await res.json();
 
-    out.innerText = text;
+      if (data.error) {
+        out.innerText = "Ошибка: " + data.error.message;
+        return;
+      }
+
+      out.innerText = data.choices[0].message.content;
+
+    } catch (e) {
+      out.innerText = "Ошибка запроса: " + e.message;
+    }
+
+  }, (err) => {
+    out.innerText = "GPS ошибка: " + err.message;
   });
 }
 </script>
