@@ -3,7 +3,11 @@ export default async function handler(req, res) {
     const { lat, lng } = req.body || {};
 
     if (!lat || !lng) {
-      return res.status(400).json({ error: "No GPS data" });
+      return res.status(400).json({
+        ok: false,
+        error: "NO_GPS",
+        message: "No GPS data received"
+      });
     }
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -17,43 +21,46 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "user",
-            content: `Я здесь: ${lat}, ${lng}. Что интересного рядом?`
+            content: `Я здесь: ${lat}, ${lng}. Что рядом?`
           }
         ]
       })
     });
 
-    const text = await response.text();
+    const data = await response.json();
 
-    // 🔥 ВАЖНО: сначала выводим RAW ответ (это диагностика)
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
+    // ❗ ЕСЛИ ОШИБКА ОТ OPENROUTER
+    if (!response.ok) {
       return res.status(500).json({
-        error: "Invalid JSON from OpenRouter",
-        raw: text
-      });
-    }
-
-    console.log("OPENROUTER:", data);
-
-    if (data.error) {
-      return res.status(500).json({
-        error: data.error.message || "OpenRouter error",
+        ok: false,
+        error: "OPENROUTER_ERROR",
+        message: data?.error?.message || "Unknown OpenRouter error",
         raw: data
       });
     }
 
-    const answer =
-      data?.choices?.[0]?.message?.content ||
-      "Нет ответа от модели";
+    const text =
+      data?.choices?.[0]?.message?.content;
 
-    return res.status(200).json({ text: answer });
+    if (!text) {
+      return res.status(500).json({
+        ok: false,
+        error: "EMPTY_RESPONSE",
+        message: "No text returned from model",
+        raw: data
+      });
+    }
 
-  } catch (err) {
+    return res.status(200).json({
+      ok: true,
+      text
+    });
+
+  } catch (e) {
     return res.status(500).json({
-      error: err.message
+      ok: false,
+      error: "SERVER_ERROR",
+      message: e.message
     });
   }
 }
