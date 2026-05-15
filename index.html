@@ -2,12 +2,13 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>AI GPS Guide</title>
+  <title>AI GPS PRO</title>
 
   <style>
+
     body {
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      background: #f3f4f6;
       padding: 20px;
     }
 
@@ -16,9 +17,9 @@
     }
 
     button {
-      padding: 12px 18px;
+      padding: 14px 20px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       background: black;
       color: white;
       font-size: 16px;
@@ -27,52 +28,51 @@
 
     #out {
       margin-top: 20px;
-      background: white;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      white-space: pre-wrap;
-      line-height: 1.6;
     }
 
-    .block {
-      margin-bottom: 15px;
+    .card {
+      background: white;
+      padding: 14px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
     .title {
+      font-size: 18px;
       font-weight: bold;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
     }
 
-    .small {
+    .meta {
       color: gray;
       font-size: 14px;
     }
+
   </style>
 </head>
 <body>
 
-<h2>🧭 AI GPS Guide</h2>
+<h2>🧭 AI GPS PRO</h2>
 
 <button onclick="ask()">Что рядом?</button>
 
-<div id="out">
-Нажми кнопку, чтобы определить местоположение
-</div>
+<div id="out"></div>
 
 <script>
+
 async function ask() {
 
   const out = document.getElementById("out");
 
-  out.innerText = "📡 Получаем GPS...";
+  out.innerHTML = "📡 Получаем GPS...";
 
   navigator.geolocation.getCurrentPosition(async (pos) => {
 
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
 
-    out.innerText = "🗺 Определяем место...";
+    out.innerHTML = "🗺 Ищем реальные места рядом...";
 
     try {
 
@@ -81,55 +81,67 @@ async function ask() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ lat, lng })
+        body: JSON.stringify({
+          lat,
+          lng
+        })
       });
 
       const data = await res.json();
 
       if (!data.ok) {
-        out.innerText =
-          "❌ Ошибка:\n\n" +
-          data.error;
+        out.innerHTML =
+          "<div class='card'>❌ Ошибка:<br><br>" +
+          data.error +
+          "</div>";
         return;
       }
 
-      out.innerHTML = `
-        <div class="block">
-          <div class="title">📍 Вы находитесь:</div>
-          <div>${data.place || "Неизвестное место"}</div>
-        </div>
+      if (!data.places.length) {
+        out.innerHTML =
+          "<div class='card'>😕 Ничего рядом не найдено</div>";
+        return;
+      }
 
-        <div class="block">
-          <div class="title">🏙 Район / адрес:</div>
-          <div class="small">
-            ${JSON.stringify(data.address, null, 2)}
-          </div>
-        </div>
+      out.innerHTML =
+        data.places.map(place => `
+          <div class="card">
 
-        <div class="block">
-          <div class="title">🌍 Координаты:</div>
-          <div class="small">
-            ${lat}, ${lng}
+            <div class="title">
+              📍 ${place.name}
+            </div>
+
+            <div class="meta">
+              ${place.type}
+            </div>
+
+            <div class="meta">
+              📏 ${place.distance} м
+            </div>
+
           </div>
-        </div>
-      `;
+        `).join("");
 
     } catch (e) {
 
-      out.innerText =
-        "❌ Ошибка запроса:\n\n" +
-        e.message;
+      out.innerHTML =
+        "<div class='card'>❌ Ошибка запроса:<br><br>" +
+        e.message +
+        "</div>";
 
     }
 
   }, (err) => {
 
-    out.innerText =
-      "❌ GPS ошибка:\n\n" +
-      err.message;
+    out.innerHTML =
+      "<div class='card'>❌ GPS ошибка:<br><br>" +
+      err.message +
+      "</div>";
 
   });
+
 }
+
 </script>
 
 </body>
