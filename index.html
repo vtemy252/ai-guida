@@ -4,30 +4,52 @@
   <meta charset="UTF-8">
   <title>AI GPS Guide</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    button { padding: 10px 20px; cursor: pointer; }
-    #out { margin-top: 20px; white-space: pre-wrap; background: #f4f4f4; padding: 10px; border-radius: 8px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f6f7f9;
+    }
+
+    button {
+      padding: 12px 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background: #111;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    #out {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      min-height: 80px;
+    }
   </style>
 </head>
 <body>
 
-<h2>AI GPS (Free OpenRouter)</h2>
+<h2>🧭 AI GPS Guide</h2>
 
 <button onclick="ask()">Что рядом?</button>
 
-<div id="out"></div>
+<div id="out">Нажми кнопку, чтобы узнать что рядом</div>
 
 <script>
 async function ask() {
   const out = document.getElementById("out");
 
-  out.innerText = "Берём GPS...";
+  out.innerText = "📡 Берём GPS...";
 
   navigator.geolocation.getCurrentPosition(async (pos) => {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
 
-    out.innerText = "Спрашиваю AI...";
+    out.innerText = "🤖 Спрашиваю AI...";
 
     try {
       const res = await fetch("/api/ask", {
@@ -40,15 +62,19 @@ async function ask() {
 
       const data = await res.json();
 
-      // 🔥 ВАЖНО: показываем ВСЁ, чтобы увидеть проблему
-      out.innerText = JSON.stringify(data, null, 2);
+      if (!data.ok) {
+        out.innerText = "❌ Ошибка:\n" + (data.error || "unknown error");
+        return;
+      }
+
+      out.innerText = "📍 Рядом с вами:\n\n" + data.text;
 
     } catch (e) {
-      out.innerText = "Ошибка запроса: " + e.message;
+      out.innerText = "❌ Ошибка запроса:\n" + e.message;
     }
 
   }, (err) => {
-    out.innerText = "GPS ошибка: " + err.message;
+    out.innerText = "❌ GPS ошибка:\n" + err.message;
   });
 }
 </script>
