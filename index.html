@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI GPS PRO</title>
 
   <style>
@@ -10,6 +11,7 @@
       font-family: Arial, sans-serif;
       background: #f3f4f6;
       padding: 20px;
+      margin: 0;
     }
 
     h2 {
@@ -47,6 +49,13 @@
     .meta {
       color: gray;
       font-size: 14px;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    .desc {
+      margin-top: 10px;
+      line-height: 1.5;
     }
 
   </style>
@@ -65,14 +74,22 @@ async function ask() {
 
   const out = document.getElementById("out");
 
-  out.innerHTML = "📡 Получаем GPS...";
+  out.innerHTML = `
+    <div class="card">
+      📡 Получаем GPS...
+    </div>
+  `;
 
   navigator.geolocation.getCurrentPosition(async (pos) => {
 
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
 
-    out.innerHTML = "🗺 Ищем реальные места рядом...";
+    out.innerHTML = `
+      <div class="card">
+        🗺 Ищем реальные места рядом...
+      </div>
+    `;
 
     try {
 
@@ -90,21 +107,37 @@ async function ask() {
       const data = await res.json();
 
       if (!data.ok) {
-        out.innerHTML =
-          "<div class='card'>❌ Ошибка:<br><br>" +
-          data.error +
-          "</div>";
+
+        out.innerHTML = `
+          <div class="card">
+            ❌ Ошибка
+            <div class="meta">
+              ${data.error || "unknown error"}
+            </div>
+          </div>
+        `;
+
         return;
       }
 
-      if (!data.places.length) {
-        out.innerHTML =
-          "<div class='card'>😕 Ничего рядом не найдено</div>";
+      if (!data.places || !data.places.length) {
+
+        out.innerHTML = `
+          <div class="card">
+            😕 Ничего рядом не найдено
+          </div>
+        `;
+
         return;
       }
 
-      out.innerHTML =
-        data.places.map(place => `
+      out.innerHTML = `
+        <div class="card">
+          📍 Найдено мест: ${data.places.length}
+        </div>
+
+        ${data.places.map(place => `
+
           <div class="card">
 
             <div class="title">
@@ -112,31 +145,47 @@ async function ask() {
             </div>
 
             <div class="meta">
-              ${place.type}
+              🏷 ${place.type}
             </div>
 
             <div class="meta">
               📏 ${place.distance} м
             </div>
 
+            <div class="desc">
+              📝 ${place.description || "Интересное место рядом"}
+            </div>
+
           </div>
-        `).join("");
+
+        `).join("")}
+      `;
 
     } catch (e) {
 
-      out.innerHTML =
-        "<div class='card'>❌ Ошибка запроса:<br><br>" +
-        e.message +
-        "</div>";
+      out.innerHTML = `
+        <div class="card">
+          ❌ Ошибка запроса
+
+          <div class="meta">
+            ${e.message}
+          </div>
+        </div>
+      `;
 
     }
 
   }, (err) => {
 
-    out.innerHTML =
-      "<div class='card'>❌ GPS ошибка:<br><br>" +
-      err.message +
-      "</div>";
+    out.innerHTML = `
+      <div class="card">
+        ❌ GPS ошибка
+
+        <div class="meta">
+          ${err.message}
+        </div>
+      </div>
+    `;
 
   });
 
